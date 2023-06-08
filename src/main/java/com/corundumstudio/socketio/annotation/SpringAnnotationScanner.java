@@ -54,7 +54,8 @@ public class SpringAnnotationScanner implements BeanPostProcessor {
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
         if (originalBeanClass != null) {
-            socketIOServer.addListeners(originalBean, originalBeanClass);
+            //modify to add listeners to the original bean 2023-6-8
+            socketIOServer.addListeners(bean, originalBeanClass);
             log.info("{} bean listeners added", originalBeanName);
             originalBeanClass = null;
             originalBeanName = null;

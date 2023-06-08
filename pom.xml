@@ -38,13 +38,6 @@
      </developer>
  </developers>
 
- <distributionManagement>
-     <repository>
-         <id>repo1</id>
-         <name>Release</name>
-         <url>file://C:/123</url>
-     </repository>
- </distributionManagement>
 
  <properties>
      <skipTests>true</skipTests>
@@ -339,5 +332,14 @@
          </plugin>
   </plugins>
  </build>
+
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>matchplay-snapshots</id>
+            <name>Team Nexus Repository snapshots</name>
+            <url>https://maven.matchplay.com/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>
