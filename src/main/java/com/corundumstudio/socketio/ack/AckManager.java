@@ -164,19 +164,23 @@ public class AckManager implements Disconnectable {
 
     @Override
     public void onDisconnect(ClientHead client) {
-        AckEntry e = ackEntries.remove(client.getSessionId());
-        if (e == null) {
-            return;
-        }
-
-        Set<Long> indexes = e.getAckIndexes();
-        for (Long index : indexes) {
-            AckCallback<?> callback = e.getAckCallback(index);
-            if (callback != null) {
-                callback.onTimeout();
+        try {
+            AckEntry e = ackEntries.remove(client.getSessionId());
+            if (e == null) {
+                return;
             }
-            SchedulerKey key = new AckSchedulerKey(Type.ACK_TIMEOUT, client.getSessionId(), index);
-            scheduler.cancel(key);
+
+            Set<Long> indexes = e.getAckIndexes();
+            for (Long index : indexes) {
+                AckCallback<?> callback = e.getAckCallback(index);
+                if (callback != null) {
+                    callback.onTimeout();
+                }
+                SchedulerKey key = new AckSchedulerKey(Type.ACK_TIMEOUT, client.getSessionId(), index);
+                scheduler.cancel(key);
+            }
+        } catch (Exception e) {
+            log.error("Can't remove ack entries, sessionId: {}, {}", client.getSessionId(), e.getMessage(), e);
         }
     }
 

@@ -185,9 +185,13 @@ public class ClientHead {
     }
 
     public void removeNamespaceClient(NamespaceClient client) {
+        log.info("ClientHead-removeNamespaceClient removing namespace, trigger sessionId: {}", client.getSessionId());
         namespaceClients.remove(client.getNamespace());
         if (namespaceClients.isEmpty()) {
+            log.info("ClientHead-removeNamespaceClient no more namespace clients, namespace sessionId: {}, trigger sessionId: {}", sessionId, client.getSessionId());
             disconnectableHub.onDisconnect(this);
+        } else {
+            log.info("ClientHead-removeNamespaceClient namespace clients left: {}, trigger sessionId: {}", namespaceClients.size(), client.getSessionId());
         }
     }
 
