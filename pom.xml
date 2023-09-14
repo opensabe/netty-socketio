@@ -336,9 +336,9 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>matchplay-snapshots</id>
+            <id>hopegaming-snapshots</id>
             <name>Team Nexus Repository snapshots</name>
-            <url>https://maven.matchplay.com/repository/maven-snapshots/</url>
+            <url>https://maven.hopegaming.com/repository/maven-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 
