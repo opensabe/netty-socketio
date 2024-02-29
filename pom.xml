@@ -3,7 +3,7 @@
 
  <groupId>com.sabegeek</groupId>
  <artifactId>netty-socketio</artifactId>
- <version>2.0.3-SNAPSHOT</version>
+ <version>2.0.4-SNAPSHOT</version>
  <packaging>bundle</packaging>
  <name>NettySocketIO</name>
  <description>Socket.IO server implemented on Java</description>

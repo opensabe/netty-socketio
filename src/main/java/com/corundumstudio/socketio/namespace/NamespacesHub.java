@@ -34,6 +34,8 @@ public class NamespacesHub {
 
     public NamespacesHub(Configuration configuration) {
         this.configuration = configuration;
+        //config default namespace
+        namespaces.putIfAbsent(Namespace.DEFAULT_NAME,configuration.getDefaultNamespace());
     }
 
     public Namespace create(String name) {

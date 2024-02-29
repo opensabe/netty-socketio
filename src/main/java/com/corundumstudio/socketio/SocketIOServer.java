@@ -59,6 +59,7 @@ public class SocketIOServer implements ClientListeners {
     public SocketIOServer(Configuration configuration) {
         this.configuration = configuration;
         this.configCopy = new Configuration(configuration);
+
         namespacesHub = new NamespacesHub(configCopy);
         mainNamespace = addNamespace(Namespace.DEFAULT_NAME);
     }
