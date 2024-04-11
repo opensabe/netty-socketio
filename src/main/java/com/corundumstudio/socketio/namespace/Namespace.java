@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2019 Nikita Koksharov
+ * Copyright (c) 2012-2023 Nikita Koksharov
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,7 @@
  */
 package com.corundumstudio.socketio.namespace;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
-
-import com.corundumstudio.socketio.AckMode;
-import com.corundumstudio.socketio.AckRequest;
-import com.corundumstudio.socketio.BroadcastOperations;
-import com.corundumstudio.socketio.Configuration;
-import com.corundumstudio.socketio.MultiTypeArgs;
-import com.corundumstudio.socketio.SingleRoomBroadcastOperations;
-import com.corundumstudio.socketio.SocketIOClient;
-import com.corundumstudio.socketio.SocketIONamespace;
+import com.corundumstudio.socketio.*;
 import com.corundumstudio.socketio.annotation.ScannerEngine;
 import com.corundumstudio.socketio.listener.*;
 import com.corundumstudio.socketio.protocol.JsonSupport;
@@ -44,8 +25,11 @@ import com.corundumstudio.socketio.store.pubsub.BulkJoinLeaveMessage;
 import com.corundumstudio.socketio.store.pubsub.JoinLeaveMessage;
 import com.corundumstudio.socketio.store.pubsub.PubSubType;
 import com.corundumstudio.socketio.transport.NamespaceClient;
-
 import io.netty.util.internal.PlatformDependent;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Hub object for all clients in one namespace.
@@ -64,6 +48,8 @@ public class Namespace implements SocketIONamespace {
     private final Queue<PingListener> pingListeners = new ConcurrentLinkedQueue<PingListener>();
     private final Queue<PongListener> pongListeners = new ConcurrentLinkedQueue<PongListener>();
     private final Queue<EventInterceptor> eventInterceptors = new ConcurrentLinkedQueue<EventInterceptor>();
+
+    private final Queue<AuthTokenListener> authDataInterceptors = new ConcurrentLinkedQueue<>();
 
     private final Map<UUID, SocketIOClient> allClients = PlatformDependent.newConcurrentHashMap();
     private final ConcurrentMap<String, Set<UUID>> roomClients = PlatformDependent.newConcurrentHashMap();
@@ -190,13 +176,14 @@ public class Namespace implements SocketIONamespace {
     public void onDisconnect(SocketIOClient client) {
         Set<String> joinedRooms = client.getAllRooms();        
         allClients.remove(client.getSessionId());
+        final Set<String> roomsToLeave = new HashSet<>(joinedRooms);
 
         // client must leave all rooms and publish the leave msg one by one on disconnect.
         for (String joinedRoom : joinedRooms) {
             leave(roomClients, joinedRoom, client.getSessionId());
-            storeFactory.pubSubStore().publish(PubSubType.LEAVE, new JoinLeaveMessage(client.getSessionId(), joinedRoom, getName()));
         }
         clientRooms.remove(client.getSessionId());
+        storeFactory.pubSubStore().publish(PubSubType.BULK_LEAVE, new BulkJoinLeaveMessage(client.getSessionId(), roomsToLeave, getName()));
 
         try {
             for (DisconnectListener listener : disconnectListeners) {
@@ -265,7 +252,16 @@ public class Namespace implements SocketIONamespace {
         return new SingleRoomBroadcastOperations(getName(), room, getRoomClients(room), storeFactory);
     }
 
-    @Override
+	@Override
+	public BroadcastOperations getRoomOperations(String... rooms) {
+        List<BroadcastOperations> list = new ArrayList<>();
+        for( String room : rooms ) {
+            list.add( new SingleRoomBroadcastOperations(getName(), room, getRoomClients(room), storeFactory) );
+        }
+        return new MultiRoomBroadcastOperations( list );
+    }
+
+	@Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -434,4 +430,23 @@ public class Namespace implements SocketIONamespace {
         return allClients.get(uuid);
     }
 
+    @Override
+    public void addAuthTokenListener(final AuthTokenListener listener) {
+        this.authDataInterceptors.add(listener);
+    }
+
+  public AuthTokenResult onAuthData(SocketIOClient client, Object authData) {
+      try {
+          for (AuthTokenListener listener : authDataInterceptors) {
+              final AuthTokenResult result = listener.getAuthTokenResult(authData, client);
+              if (!result.isSuccess()) {
+                return result;
+              }
+          }
+          return AuthTokenResult.AuthTokenResultSuccess;
+      } catch (Exception e) {
+          exceptionListener.onAuthException(e, client);
+      }
+      return new AuthTokenResult(false, "Internal error");
+  }
 }

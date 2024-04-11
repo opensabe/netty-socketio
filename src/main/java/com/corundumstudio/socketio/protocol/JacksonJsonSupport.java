@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2019 Nikita Koksharov
+ * Copyright (c) 2012-2023 Nikita Koksharov
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ import io.netty.util.internal.PlatformDependent;
 
 public class JacksonJsonSupport implements JsonSupport {
 
-    private class AckArgsDeserializer extends StdDeserializer<AckArgs> {
+    protected class AckArgsDeserializer extends StdDeserializer<AckArgs> {
 
         private static final long serialVersionUID = 7810461017389946707L;
 
@@ -154,7 +154,7 @@ public class JacksonJsonSupport implements JsonSupport {
 
     }
 
-    private class EventDeserializer extends StdDeserializer<Event> {
+    protected class EventDeserializer extends StdDeserializer<Event> {
 
         private static final long serialVersionUID = 8178797221017768689L;
 
@@ -273,7 +273,7 @@ public class JacksonJsonSupport implements JsonSupport {
     }
 
 
-    private class ExBeanSerializerModifier extends BeanSerializerModifier {
+    protected static class ExBeanSerializerModifier extends BeanSerializerModifier {
 
         private final ByteArraySerializer serializer = new ByteArraySerializer();
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2019 Nikita Koksharov
+ * Copyright (c) 2012-2023 Nikita Koksharov
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,20 +110,22 @@ public class SocketIOServer implements ClientListeners {
 
     /**
      * Get broadcast operations for clients within
-     * room by <code>room</code> name
+     * rooms by <code>rooms'</code> names
      *
-     * @param room - name of room
+     * @param rooms rooms' names
      * @return broadcast operations
      */
-    public BroadcastOperations getRoomOperations(String room) {
+    public BroadcastOperations getRoomOperations(String... rooms) {
         Collection<SocketIONamespace> namespaces = namespacesHub.getAllNamespaces();
         List<BroadcastOperations> list = new ArrayList<BroadcastOperations>();
         BroadcastOperations broadcast = null;
         if( namespaces != null && namespaces.size() > 0 ) {
             for( SocketIONamespace n : namespaces ) {
-                broadcast = n.getRoomOperations( room );
-                list.add( broadcast );
-            }
+				for ( String room : rooms ) {
+                    broadcast = n.getRoomOperations( room );
+                    list.add( broadcast );
+                }
+			}
         }
         return new MultiRoomBroadcastOperations( list );
     }

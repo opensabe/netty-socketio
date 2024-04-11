@@ -2,8 +2,6 @@ Netty-socketio Overview
 ===
 This project is an open-source Java implementation of [Socket.IO](http://socket.io/) server. Based on [Netty](http://netty.io/) server framework.  
 
-Checkout [Demo project](https://github.com/mrniko/netty-socketio-demo)
-
 Licensed under the Apache License 2.0.
 
 
@@ -19,9 +17,11 @@ Features
 * Supports distributed broadcast across netty-socketio nodes ([Redisson](https://redisson.org), [Hazelcast](https://www.hazelcast.com/))  
 * Supports OSGi  
 * Supports Spring  
+* Contains Java module info for JPMS. 
 * Lock-free and thread-safe implementation  
 * Declarative handler configuration via annotations  
 
+JAR is compatible with Java 8 but needs Java 11+ for building the module-info.
 
 Performance
 ================================
@@ -38,15 +38,45 @@ Customer feedback in __2014__:
 
 Projects using netty-socketio
 ================================
+Multiplayer Orchestra: [multiplayer-orchestra.com](https://multiplayer-orchestra.com/)  
 AVOS Cloud: [avoscloud.com](https://avoscloud.com/)  
-Bingo Crack: [bingocrack.com](http://bingocrack.com/)  
 Kambi Sports Solutions: [kambi.com](http://kambi.com/)  
 ARSnova: [arsnova.eu](https://arsnova.eu)  
-Zipwhip: [zipwhip.com](https://zipwhip.com/)
 
 Recent Releases
 ================================
 #### Please Note: trunk is current development branch.
+
+#### 01-Mar-2024 - version 2.0.9 released
+
+Feature - v3/v4 parsing of multiple messages in one HTTP polling body (thanks to @unverbraucht)
+
+Fixed - IllegalReferenceCountException error
+
+#### 24-Jan-2024 - version 2.0.8 released
+
+Fixed - possible OOM caused by attachments parsing
+
+#### 23-Jan-2024 - version 2.0.7 released
+
+Github Actions support made by @liangyuanpeng
+
+Feature - Java module support (thanks to @unverbraucht)  
+Feature - AuthTokenListener added (thanks to @unverbraucht)  
+Feature - multi-packet separator support (thanks to @unverbraucht)  
+
+Improvement - Send Bulk leave event instead of multiple leave events on disconnect (thanks to @ksahu750)  
+
+Fixed - NPE during ack response timeout (thanks to @BlueSodaWater)  
+Fixed - Resource Leak in readVersion() method (thanks to @JHOANG23)
+
+#### 24-Oct-2023 - version 2.0.6 released
+
+Feature - added availability to add key-value pairs to socket store during authorization (thanks to @shutuper)  
+Feature - getRoomOperations() method with room varargs param (thanks to @shutuper)  
+
+#### 01-Jul-2023 - version 2.0.3 released
+Fixed - client can't connect to non-default namespace (thanks to @lyjnew)
 
 #### 17-May-2023 - version 2.0.2 released
 Fixed - NPE in WebSocketTransport and PollingTransport (thanks to @Hunterk95)
@@ -311,13 +341,5 @@ Include the following to your dependency list:
     <dependency>
      <groupId>com.corundumstudio.socketio</groupId>
      <artifactId>netty-socketio</artifactId>
-     <version>1.7.19</version>
+     <version>2.0.3</version>
     </dependency>
-    
-### Supported by
-
-YourKit is kindly supporting this open source project with its full-featured Java Profiler.
-YourKit, LLC is the creator of innovative and intelligent tools for profiling
-Java and .NET applications. Take a look at YourKit's leading software products:
-<a href="http://www.yourkit.com/java/profiler/index.jsp">YourKit Java Profiler</a> and
-<a href="http://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET Profiler</a>.

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2019 Nikita Koksharov
+ * Copyright (c) 2012-2023 Nikita Koksharov
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,35 @@
  */
 package com.corundumstudio.socketio.handler;
 
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+
 import com.corundumstudio.socketio.Configuration;
 import com.corundumstudio.socketio.Transport;
+import com.corundumstudio.socketio.messages.HttpErrorMessage;
 import com.corundumstudio.socketio.messages.HttpMessage;
-import com.corundumstudio.socketio.messages.*;
+import com.corundumstudio.socketio.messages.OutPacketMessage;
+import com.corundumstudio.socketio.messages.XHROptionsMessage;
+import com.corundumstudio.socketio.messages.XHRPostMessage;
 import com.corundumstudio.socketio.protocol.Packet;
 import com.corundumstudio.socketio.protocol.PacketEncoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.ByteBufUtil;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler.Sharable;
-import io.netty.handler.codec.http.*;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelOutboundHandlerAdapter;
+import io.netty.channel.ChannelPromise;
+import io.netty.handler.codec.http.DefaultHttpContent;
+import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpUtil;
+import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.ContinuationWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
@@ -36,10 +53,8 @@ import io.netty.util.AttributeKey;
 import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -47,8 +62,8 @@ import java.util.List;
 import java.util.Queue;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
-
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Sharable
 public class EncoderHandler extends ChannelOutboundHandlerAdapter {
@@ -80,8 +95,8 @@ public class EncoderHandler extends ChannelOutboundHandlerAdapter {
     private void readVersion() throws IOException {
         Enumeration<URL> resources = getClass().getClassLoader().getResources("META-INF/MANIFEST.MF");
         while (resources.hasMoreElements()) {
-            try {
-                Manifest manifest = new Manifest(resources.nextElement().openStream());
+            try (InputStream inputStream = resources.nextElement().openStream()){
+                Manifest manifest = new Manifest(inputStream);
                 Attributes attrs = manifest.getMainAttributes();
                 if (attrs == null) {
                     continue;
@@ -160,7 +175,6 @@ public class EncoderHandler extends ChannelOutboundHandlerAdapter {
 
         channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT, promise).addListener(ChannelFutureListener.CLOSE);
     }
-    
     private void sendError(HttpErrorMessage errorMsg, ChannelHandlerContext ctx, ChannelPromise promise) throws IOException {
         final ByteBuf encBuf = encoder.allocateBuffer(ctx.alloc());
         ByteBufOutputStream out = new ByteBufOutputStream(encBuf);
@@ -302,7 +316,7 @@ public class EncoderHandler extends ChannelOutboundHandlerAdapter {
      * - all of the operations succeed
      * The setChannelPromise method should be called after all the futures are added
      */
-    private class ChannelFutureList implements GenericFutureListener<Future<Void>> {
+    private static class ChannelFutureList implements GenericFutureListener<Future<Void>> {
 
         private List<ChannelFuture> futureList = new ArrayList<ChannelFuture>();
         private ChannelPromise promise = null;

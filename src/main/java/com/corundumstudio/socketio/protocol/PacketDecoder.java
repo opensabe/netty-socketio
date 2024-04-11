@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2019 Nikita Koksharov
+ * Copyright (c) 2012-2023 Nikita Koksharov
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,16 @@ package com.corundumstudio.socketio.protocol;
 import com.corundumstudio.socketio.AckCallback;
 import com.corundumstudio.socketio.ack.AckManager;
 import com.corundumstudio.socketio.handler.ClientHead;
+import com.corundumstudio.socketio.namespace.Namespace;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
-import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.base64.Base64;
 import io.netty.util.CharsetUtil;
-
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.LinkedList;
-import java.util.UUID;
+import java.util.Map;
 
 public class PacketDecoder {
 
@@ -148,23 +147,34 @@ public class PacketDecoder {
                 || frame.getByte(0) == 4 || frame.getByte(0) == 1) {
             return parseBinary(head, frame);
         }
-        PacketType type = readType(frame);
+
+        final int separatorPos = frame.bytesBefore((byte) 0x1E);
+        final ByteBuf packetBuf;
+        if (separatorPos > 0) {
+            // Multiple packets in one, copy out the next packet to parse
+            packetBuf = frame.copy(frame.readerIndex(), separatorPos);
+            frame.skipBytes(separatorPos + 1);
+        } else {
+            packetBuf = frame;
+        }
+
+        PacketType type = readType(packetBuf);
         Packet packet = new Packet(type, head.getEngineIOVersion());
 
         if (type == PacketType.PING) {
-            packet.setData(readString(frame));
+            packet.setData(readString(packetBuf));
             return packet;
         }
 
-        if (!frame.isReadable()) {
+        if (!packetBuf.isReadable()) {
             return packet;
         }
 
-        PacketType innerType = readInnerType(frame);
+        PacketType innerType = readInnerType(packetBuf);
         packet.setSubType(innerType);
 
-        parseHeader(frame, packet, innerType);
-        parseBody(head, frame, packet);
+        parseHeader(packetBuf, packet, innerType);
+        parseBody(head, packetBuf, packet);
         return packet;
     }
 
@@ -230,7 +240,7 @@ public class PacketDecoder {
                 binaryPacket.addAttachment(Unpooled.copiedBuffer(attachBuf));
                 attachBuf.release();
             }
-            frame.readerIndex(frame.readerIndex() + frame.readableBytes());
+            frame.skipBytes(frame.readableBytes());
 
             if (binaryPacket.isAttachmentsLoaded()) {
                 LinkedList<ByteBuf> slices = new LinkedList<ByteBuf>();
@@ -257,7 +267,7 @@ public class PacketDecoder {
                 }
                 slices.add(source.slice());
 
-                ByteBuf compositeBuf = Unpooled.wrappedBuffer(slices.toArray(new ByteBuf[slices.size()]));
+                ByteBuf compositeBuf = Unpooled.wrappedBuffer(slices.toArray(new ByteBuf[0]));
                 parseBody(head, compositeBuf, binaryPacket);
                 head.setLastBinaryPacket(null);
                 return binaryPacket;
@@ -270,22 +280,28 @@ public class PacketDecoder {
         if (packet.getType() == PacketType.MESSAGE) {
             if (packet.getSubType() == PacketType.CONNECT
                     || packet.getSubType() == PacketType.DISCONNECT) {
-                packet.setNsp(readNamespace(frame));
+                packet.setNsp(readNamespace(frame, false));
+                if (packet.getSubType() == PacketType.CONNECT && frame.readableBytes() > 0) {
+                    final Object authArgs = jsonSupport.readValue(packet.getNsp(), new ByteBufInputStream(frame), Map.class);
+                    packet.setData(authArgs);
+                }
             }
 
             if (packet.hasAttachments() && !packet.isAttachmentsLoaded()) {
                 packet.setDataSource(Unpooled.copiedBuffer(frame));
-                frame.readerIndex(frame.readableBytes());
+                frame.skipBytes(frame.readableBytes());
                 head.setLastBinaryPacket(packet);
                 return;
             }
 
             if (packet.getSubType() == PacketType.ACK
                     || packet.getSubType() == PacketType.BINARY_ACK) {
-                ByteBufInputStream in = new ByteBufInputStream(frame);
                 AckCallback<?> callback = ackManager.getCallback(head.getSessionId(), packet.getAckId());
-                AckArgs args = jsonSupport.readAckArgs(in, callback);
-                packet.setData(args.getArgs());
+                if (callback != null) {
+                    ByteBufInputStream in = new ByteBufInputStream(frame);
+                    AckArgs args = jsonSupport.readAckArgs(in, callback);
+                    packet.setData(args.getArgs());
+                }
             }
 
             if (packet.getSubType() == PacketType.EVENT
@@ -298,7 +314,7 @@ public class PacketDecoder {
         }
     }
 
-    private String readNamespace(ByteBuf frame) {
+    private String readNamespace(ByteBuf frame, final boolean defaultToAll) {
 
         /**
          * namespace post request with url queryString, like
@@ -306,18 +322,30 @@ public class PacketDecoder {
          *  /message,
          */
         ByteBuf buffer = frame.slice();
-        // skip this frame
-        frame.readerIndex(frame.readerIndex() + frame.readableBytes());
+
 
         int endIndex = buffer.bytesBefore((byte) '?');
         if (endIndex > 0) {
-            return readString(buffer, endIndex);
+            String namespace = readString(buffer, endIndex);
+            if(namespace.startsWith("/")) {
+                frame.readerIndex(frame.readerIndex() + endIndex + 1);
+                return namespace;
+            }
         }
         endIndex = buffer.bytesBefore((byte) ',');
         if (endIndex > 0) {
-            return readString(buffer, endIndex);
+            String namespace = readString(buffer, endIndex);
+            if(namespace.startsWith("/")) {
+                frame.readerIndex(frame.readerIndex() + endIndex + 1);
+                return namespace;
+            }
         }
-        return readString(buffer);
+        if (defaultToAll) {
+            // skip this frame
+            frame.readerIndex(frame.readerIndex() + frame.readableBytes());
+            return readString(buffer);
+        }
+        return Namespace.DEFAULT_NAME;
     }
 
 }
