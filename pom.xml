@@ -160,20 +160,6 @@
         </dependency>
     </dependencies>
 
-    <!-- 打包上传二进制文件到仓库配置 -->
-    <distributionManagement>
-        <repository>
-            <id>matchplay-releases</id>
-            <name>Team Nexus Repository releases</name>
-            <url>https://maven.matchplay.com/repository/maven-releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>matchplay-snapshots</id>
-            <name>Team Nexus Repository snapshots</name>
-            <url>https://maven.matchplay.com/repository/maven-snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
-
     <build>
         <plugins>
             <plugin>
