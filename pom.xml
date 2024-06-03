@@ -12,9 +12,13 @@
     <url>https://github.com/mrniko/netty-socketio</url>
 
     <scm>
-        <url>scm:git:git@github.com:mrniko/netty-socketio.git</url>
-        <connection>scm:git:git@github.com:mrniko/netty-socketio.git</connection>
-        <developerConnection>scm:git:git@github.com:mrniko/netty-socketio.git</developerConnection>
+        <!--指向项目的可浏览SCM库（例如ViewVC或者Fisheye）的URL。-->
+        <url>scm:git:git@github.com:opensabe/netty-socketio.git</url>
+        <!--SCM的URL,该URL描述了版本库和如何连接到版本库。欲知详情，请看SCMs提供的URL格式和列表。该连接只读。-->
+        <connection>scm:git:git@github.com:opensabe/netty-socketio.git</connection>
+        <!--给开发者使用的，类似connection元素。即该连接不仅仅只读-->
+        <developerConnection>scm:git:git@github.com:opensabe/netty-socketio.git</developerConnection>
+        <!--当前代码的标签，在开发阶段默认为HEAD-->
         <tag>HEAD</tag>
     </scm>
 
@@ -26,16 +30,21 @@
         </license>
     </licenses>
 
+    <!--项目开发者列表-->
     <developers>
         <developer>
-            <id>mrniko</id>
-            <name>Nikita Koksharov</name>
-            <email>abracham.mitchell@gmail.com</email>
+            <!--SCM里项目开发者的唯一标识符-->
+            <id>opensabe</id>
+            <!--项目开发者的全名-->
+            <name>opensabe-tech</name>
+            <!--项目开发者的email-->
+            <email>tech@sabegeek.com</email>
             <roles>
-                <role>Architect</role>
+                <role>Project Manager</role>
                 <role>Developer</role>
             </roles>
-            <timezone>+4</timezone>
+            <!--项目开发者所在时区， -11到12范围内的整数。-->
+            <timezone>+8</timezone>
         </developer>
     </developers>
 
@@ -46,6 +55,7 @@
         <netty.version>4.1.92.Final</netty.version>
     </properties>
 
+    <!--在列的项目构建profile，如果被激活，会修改构建处理-->
     <profiles>
         <profile>
             <id>release-sign-artifacts</id>
@@ -201,7 +211,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <linkXref>true</linkXref>
+<!--                    <linkXref>true</linkXref>-->
                     <minimumTokens>100</minimumTokens>
                     <targetJdk>1.6</targetJdk>
                     <verbose>true</verbose>
@@ -341,5 +351,13 @@
             </plugin>
         </plugins>
     </build>
+
+    <!--项目分发信息，在执行mvn deploy后表示要发布的位置。有了这些信息就可以把网站部署到远程服务器或者把构件部署到远程仓库。-->
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>
