@@ -22,6 +22,7 @@ import java.util.List;
 import com.corundumstudio.socketio.handler.SuccessAuthorizationListener;
 import com.corundumstudio.socketio.listener.DefaultExceptionListener;
 import com.corundumstudio.socketio.listener.ExceptionListener;
+import com.corundumstudio.socketio.namespace.Namespace;
 import com.corundumstudio.socketio.protocol.JsonSupport;
 import com.corundumstudio.socketio.store.MemoryStoreFactory;
 import com.corundumstudio.socketio.store.StoreFactory;
@@ -92,9 +93,12 @@ public class Configuration {
 
     private boolean needClientAuth = false;
 
+    private Namespace defaultNamespace ;
     public Configuration() {
     }
-
+    public Configuration cloneForNamespace() {
+        return new Configuration(this);
+    }
     /**
      * Defend from further modifications by cloning
      *
@@ -160,6 +164,7 @@ public class Configuration {
         setWebsocketCompression(conf.isWebsocketCompression());
         setRandomSession(conf.randomSession);
         setNeedClientAuth(conf.isNeedClientAuth());
+        setDefaultNamespace(conf.getDefaultNamespace());
     }
 
     public JsonSupport getJsonSupport() {
@@ -616,5 +621,13 @@ public class Configuration {
     }
     public boolean isNeedClientAuth() {
         return needClientAuth;
+    }
+
+    public Namespace getDefaultNamespace() {
+        return defaultNamespace;
+    }
+
+    public void setDefaultNamespace(Namespace defaultNamespace) {
+        this.defaultNamespace = defaultNamespace;
     }
 }

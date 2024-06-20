@@ -20,6 +20,7 @@ import io.netty.util.internal.PlatformDependent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 
 import com.corundumstudio.socketio.Configuration;
@@ -34,6 +35,10 @@ public class NamespacesHub {
 
     public NamespacesHub(Configuration configuration) {
         this.configuration = configuration;
+        if(Objects.nonNull(configuration.getDefaultNamespace())){
+            //config default namespace
+            namespaces.putIfAbsent(Namespace.DEFAULT_NAME,configuration.getDefaultNamespace());
+        }
     }
 
     public Namespace create(String name) {
