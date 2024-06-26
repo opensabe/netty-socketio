@@ -8,12 +8,15 @@
 
 name: Java CI with Maven And Deploy Maven Central
 
+#on:
+#  push:
+#    branches: [ "main" ]
+#  pull_request:
+#    branches: [ "main" ]
+# 创建release分支时候，才会触发
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
+  release:
+    types: [created]
 jobs:
   build:
     runs-on: ubuntu-latest
