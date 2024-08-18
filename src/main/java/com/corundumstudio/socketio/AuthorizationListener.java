@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2019 Nikita Koksharov
+ * Copyright (c) 2012-2023 Nikita Koksharov
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,13 @@ package com.corundumstudio.socketio;
 public interface AuthorizationListener {
 
     /**
-     * Checks is client with handshake data is authorized
+     * Checks whether a client with handshake data is authorized on connection
+	   * Optionally returns storeParams that will be added to {@link SocketIOClient} store
      *
-     * @param data - handshake data
-     * @return - <b>true</b> if client is authorized of <b>false</b> otherwise
+     * @param data handshake data
+     * @return - {@link AuthorizationResult}
      */
-    boolean isAuthorized(HandshakeData data);
+    AuthorizationResult getAuthorizationResult(HandshakeData data);
+
 
 }

@@ -1,3 +1,5 @@
+package com.corundumstudio.socketio;
+
 /**
  * Copyright (c) 2012-2023 Nikita Koksharov
  *
@@ -13,26 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.corundumstudio.socketio.store.pubsub;
 
-import java.util.UUID;
+public interface AuthTokenListener {
 
-public class DisconnectMessage extends PubSubMessage {
-
-    private static final long serialVersionUID = -2763553673397520368L;
-
-    private UUID sessionId;
-
-    public DisconnectMessage() {
-    }
-
-    public DisconnectMessage(UUID sessionId) {
-        super();
-        this.sessionId = sessionId;
-    }
-
-    public UUID getSessionId() {
-        return sessionId;
-    }
+  /** Socket.IO clients from version 4 can offer an auth token when connecting
+   * to a namespace. This listener gets invoked if a token is found in the connect
+   * packet
+   * @param authToken the token as parsed by the JSON parser
+   * @param client client that is connecting
+   * @return authorization result
+   */
+  AuthTokenResult getAuthTokenResult(Object authToken, SocketIOClient client);
 
 }

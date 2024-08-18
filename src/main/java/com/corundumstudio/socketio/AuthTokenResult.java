@@ -1,3 +1,5 @@
+package com.corundumstudio.socketio;
+
 /**
  * Copyright (c) 2012-2023 Nikita Koksharov
  *
@@ -13,26 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.corundumstudio.socketio.store.pubsub;
 
-import java.util.UUID;
+public class AuthTokenResult {
 
-public class DisconnectMessage extends PubSubMessage {
+  public final static AuthTokenResult AuthTokenResultSuccess = new AuthTokenResult(true, null);
+  private final boolean success;
+  private final Object errorData;
 
-    private static final long serialVersionUID = -2763553673397520368L;
+  public AuthTokenResult(final boolean success, final Object errorData) {
+    this.success = success;
+    this.errorData = errorData;
+  }
 
-    private UUID sessionId;
+  public boolean isSuccess() {
+    return success;
+  }
 
-    public DisconnectMessage() {
-    }
-
-    public DisconnectMessage(UUID sessionId) {
-        super();
-        this.sessionId = sessionId;
-    }
-
-    public UUID getSessionId() {
-        return sessionId;
-    }
-
+  public Object getErrorData() {
+    return errorData;
+  }
 }

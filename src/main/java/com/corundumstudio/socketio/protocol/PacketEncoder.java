@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2019 Nikita Koksharov
+ * Copyright (c) 2012-2023 Nikita Koksharov
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.corundumstudio.socketio.protocol;
 
-import com.corundumstudio.socketio.handler.ClientHead;
+import com.corundumstudio.socketio.Configuration;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufOutputStream;
@@ -28,8 +28,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-
-import com.corundumstudio.socketio.Configuration;
 
 public class PacketEncoder {
 
@@ -123,10 +121,18 @@ public class PacketEncoder {
 
     public void encodePackets(Queue<Packet> packets, ByteBuf buffer, ByteBufAllocator allocator, int limit) throws IOException {
         int i = 0;
+        boolean hasPrecedingPacket = false;
         while (true) {
             Packet packet = packets.poll();
             if (packet == null || i == limit) {
                 break;
+            }
+            // Multiple packets are separated by 0x1e from protocol version 3 on
+            // see https://socket.io/docs/v4/socket-io-protocol/#sample-session
+            final boolean isV3OrNewer = EngineIOVersion.V4.equals(packet.getEngineIOVersion()) ||
+                EngineIOVersion.V3.equals(packet.getEngineIOVersion());
+            if (hasPrecedingPacket && isV3OrNewer) {
+                buffer.writeByte(0x1e);
             }
             encodePacket(packet, buffer, allocator, false);
 
@@ -139,6 +145,7 @@ public class PacketEncoder {
                 buffer.writeByte(4);
                 buffer.writeBytes(attachment);
             }
+            hasPrecedingPacket = true;
         }
     }
 
@@ -299,8 +306,13 @@ public class PacketEncoder {
                         if (!packet.getNsp().isEmpty()) {
                             buf.writeBytes(packet.getNsp().getBytes(CharsetUtil.UTF_8));
                         }
+                        //:TODO lyjnew tmp change V4 add “,”
                         if (EngineIOVersion.V4.equals(packet.getEngineIOVersion())
                                 && packet.getData() != null) {
+
+                            if (!packet.getNsp().isEmpty()) {
+                                buf.writeByte(',');
+                            }
                             ByteBufOutputStream out = new ByteBufOutputStream(buf);
                             jsonSupport.writeValue(out, packet.getData());
                         }

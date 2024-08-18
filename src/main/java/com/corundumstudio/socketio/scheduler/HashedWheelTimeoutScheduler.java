@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2019 Nikita Koksharov
+ * Copyright (c) 2012-2023 Nikita Koksharov
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,11 +80,8 @@ public class HashedWheelTimeoutScheduler implements CancelableScheduler {
                 ctx.executor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        try {
-                            runnable.run();
-                        } finally {
-                            scheduledFutures.remove(key);
-                        }
+                    	scheduledFutures.remove(key);
+                        runnable.run();
                     }
                 });
             }
@@ -98,11 +95,8 @@ public class HashedWheelTimeoutScheduler implements CancelableScheduler {
         Timeout timeout = executorService.newTimeout(new TimerTask() {
             @Override
             public void run(Timeout timeout) throws Exception {
-                try {
-                    runnable.run();
-                } finally {
-                    scheduledFutures.remove(key);
-                }
+                scheduledFutures.remove(key);
+                runnable.run();
             }
         }, delay, unit);
 

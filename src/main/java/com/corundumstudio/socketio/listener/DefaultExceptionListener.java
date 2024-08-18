@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2019 Nikita Koksharov
+ * Copyright (c) 2012-2023 Nikita Koksharov
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,11 @@ public class DefaultExceptionListener extends ExceptionListenerAdapter {
     public boolean exceptionCaught(ChannelHandlerContext ctx, Throwable e) throws Exception {
         log.error(e.getMessage(), e);
         return true;
+    }
+
+    @Override
+    public void onAuthException(Throwable e, SocketIOClient client) {
+        log.error(e.getMessage(), e);
     }
 
 }
